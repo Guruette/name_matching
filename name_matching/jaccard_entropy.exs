@@ -43,7 +43,7 @@ defmodule NameMatcher do
   end
 
 
-  defp entropy_weighted_score(input_tokens, candidate_tokens, entropy_map, threshold) do
+  defp entropy_weighted_score(input_tokens, candidate_tokens, entropy_map) do
     input_set = MapSet.new(input_tokens)
     candidate_set = MapSet.new(candidate_tokens)
 
@@ -52,7 +52,7 @@ defmodule NameMatcher do
 
     sum_weights = fn set ->
       set
-      |> Enum.map(fn token -> 1 - Map.get(entropy_map, token, threshold) end)
+      |> Enum.map(fn token -> 1 - Map.get(entropy_map, token, 1.0) end)
       |> Enum.sum()
     end
 
@@ -64,7 +64,7 @@ defmodule NameMatcher do
 
 
 
-  def find_matches(input, candidates, entropy_map, threshold) do
+  def find_matches(input, candidates, entropy_map) do
     input_tokens = normalise_string(input)
 
     candidates
@@ -73,7 +73,7 @@ defmodule NameMatcher do
       jaccard = jaccard_similarity(input_tokens, candidate_tokens)
 
       if jaccard >= 0.5 do
-        weighted_score = entropy_weighted_score(input_tokens, candidate_tokens, entropy_map, threshold)
+        weighted_score = entropy_weighted_score(input_tokens, candidate_tokens, entropy_map)
         {candidate, weighted_score}
       else
         nil
@@ -87,16 +87,16 @@ end
 
 
 names = [
-  ["Smith-Brown, Adam John", "Adam John, Smith-Brown"],
-  ["Smith Brown, Adam John", "Adam John, Smith Brown"],
-  ["Smith, Alexandra", "Alexandra, Smith"],
-  ["Smith, John", "John, Smith"],
-  ["Smith, Mary", "Mary, Smith"],
-  ["Brown, Adam", "Adam, Brown"],
-  ["Ahmed, Adam", "Adam Ahmed"],
-  ["Gordon, James", "James Gordon"],
-  ["John Adam Brown", "Brown John Adam"],
-  ["Xerxes Smith", "Smith Xerxes"],
+  ["Smith-Brown, Adam John"],
+  ["Smith Brown, Adam John"],
+  ["Smith, Alexandra"],
+  ["Smith, John"],
+  ["Smith, Mary"],
+  ["Brown, Adam"],
+  ["Ahmed, Adam"],
+  ["Gordon, James"],
+  ["John Adam Brown"],
+  ["Xerxes Smith"],
 ]
 
 # 2. Calculate entropy map
@@ -110,7 +110,7 @@ input = "Smith Brown Adam John"
 res =
   Enum.zip(names, entropy_map)
   |> Enum.map(fn {name_list, map} ->
-    NameMatcher.find_matches(input, name_list, map, 0.75)
+    NameMatcher.find_matches(input, name_list, map)
   end)
 
 IO.inspect(res)
