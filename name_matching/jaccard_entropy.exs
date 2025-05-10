@@ -87,30 +87,28 @@ end
 
 
 names = [
-  ["Smith-Brown, Adam John"],
-  ["Smith Brown, Adam John"],
-  ["Smith, Alexandra"],
-  ["Smith, John"],
-  ["Smith, Mary"],
-  ["Brown, Adam"],
-  ["Ahmed, Adam"],
-  ["Gordon, James"],
-  ["John Adam Brown"],
-  ["Xerxes Smith"],
+  "Smith-Brown, Adam John",
+  "Smith Brown, Adam John",
+  "Smith, Alexandra",
+  "Smith, John",
+  "Smith, Mary",
+  "Brown, Adam",
+  "Ahmed, Adam",
+  "Gordon, James",
+  "John Adam Brown",
+  "Adam John Smith",
+  "Xerxes Smith",
 ]
 
 # 2. Calculate entropy map
 entropy_map =
-  names
-  |> Enum.map(fn name_list -> NameMatcher.calculate(name_list) end)
+  NameMatcher.calculate(names)
 
 # 3. Find matches for an input name
 input = "Smith Brown Adam John"
 
 res =
-  Enum.zip(names, entropy_map)
-  |> Enum.map(fn {name_list, map} ->
-    NameMatcher.find_matches(input, name_list, map)
-  end)
+    NameMatcher.find_matches(input, names, entropy_map)
+
 
 IO.inspect(res)
