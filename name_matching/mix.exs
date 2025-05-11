@@ -19,8 +19,6 @@ defmodule Example.Mixfile do
   end
 
   defp deps do
-    [
-      {:akin, "~> 0.2.0"}
-    ]
+    []
   end
 end
