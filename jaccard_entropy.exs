@@ -128,6 +128,7 @@ end
 
 names = [
   "Smith-Brown, Adam John",
+  "Adam John Smith-Brown",
   "Smith Brown, Adam John",
   "Smith Brown, Aadam John",
   "Smith Bròwn, Adam John",
@@ -148,15 +149,12 @@ names = [
   "Xerxes Murphy",
 ]
 
-# 2. Calculate entropy map
-entropy_map =
-  NameMatcher.calculate(names)
+# Calculate entropy map for all candidates
+entropy_map = NameMatcher.calculate(names)
 
-# 3. Find matches for an input name
 input = "Smith Brown Adam John Done"
 
-res =
-    NameMatcher.find_matches(input, names, entropy_map)
-
+# Find matches for an input name
+res = NameMatcher.find_matches(input, names, entropy_map)
 
 IO.inspect(res)
