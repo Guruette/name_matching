@@ -41,17 +41,21 @@ defmodule NameMatcher do
     end
   end
 
-  #  Jaccard-Jaro to use fuzzy token matches:
+  #  Jaccard-Jaro to use fuzzy token matches symmetric
   def jaccard_similarity(tokens1, tokens2) do
-    similarity_matrix = for t1 <- tokens1 do
+    matrix = for t1 <- tokens1 do
       for t2 <- tokens2 do
         token_similarity(t1, t2)
       end
     end
 
-    best_matches = Enum.map(similarity_matrix, &Enum.max/1)
-    Enum.sum(best_matches) / length(best_matches)
+    row_max = Enum.map(matrix, &Enum.max/1)
+    col_max = matrix |> List.zip() |> Enum.map(&Tuple.to_list/1) |> Enum.map(&Enum.max/1)
+
+    avg_max = (Enum.sum(row_max) + Enum.sum(col_max)) / (length(row_max) + length(col_max))
+    avg_max
   end
+
 
   # Boost matches with similar name structures
   def structure_score(input_tokens, candidate_tokens) do
