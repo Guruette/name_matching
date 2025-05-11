@@ -32,14 +32,32 @@ defmodule NameMatcher do
       |> String.split()
   end
 
+  defp token_similarity(a, b) do
+    max_len = max(String.length(a), String.length(b))
+    if max_len == 0 do
+      1.0
+    else
+      String.jaro_distance(a, b)
+    end
+  end
+
+  #  Jaccard-Jaro to use fuzzy token matches:
   def jaccard_similarity(tokens1, tokens2) do
-    set1 = MapSet.new(tokens1)
-    set2 = MapSet.new(tokens2)
+    similarity_matrix = for t1 <- tokens1 do
+      for t2 <- tokens2 do
+        token_similarity(t1, t2)
+      end
+    end
 
-    intersection = MapSet.intersection(set1, set2) |> MapSet.size()
-    union = MapSet.union(set1, set2) |> MapSet.size()
+    best_matches = Enum.map(similarity_matrix, &Enum.max/1)
+    Enum.sum(best_matches) / length(best_matches)
+  end
 
-    if union == 0, do: 0.0, else: intersection / union
+  # Boost matches with similar name structures
+  def structure_score(input_tokens, candidate_tokens) do
+    input_length = length(input_tokens)
+    candidate_length = length(candidate_tokens)
+    1 - abs(input_length - candidate_length) / max(input_length, candidate_length)
   end
 
 
@@ -62,6 +80,15 @@ defmodule NameMatcher do
     if union_sum > 0, do: intersection_sum / union_sum, else: 0.0
   end
 
+  defp dynamic_threshold(tokens) do
+    case length(tokens) do
+      2 -> 0.9
+      3 -> 0.85
+      4 -> 0.8
+      5 -> 0.75
+      _ -> 0.7
+    end
+  end
 
 
   def find_matches(input, candidates, entropy_map) do
@@ -72,15 +99,22 @@ defmodule NameMatcher do
       candidate_tokens = normalise_string(candidate)
       jaccard = jaccard_similarity(input_tokens, candidate_tokens)
 
+      IO.inspect(candidate, label: "--- candidate")
+      IO.inspect(jaccard, label: "--- jaccard")
+
       if jaccard >= 0.5 do
-        weighted_score = entropy_weighted_score(input_tokens, candidate_tokens, entropy_map)
+        entropy_score = entropy_weighted_score(input_tokens, candidate_tokens, entropy_map)
+        structure_score = structure_score(input_tokens, candidate_tokens)
+        weighted_score = 0.6 * entropy_score + 0.3 * jaccard + 0.1 * structure_score
         {candidate, weighted_score}
       else
         nil
       end
     end)
     |> Enum.reject(&is_nil/1)
+    |> Enum.reject(fn {_name, score} -> score < dynamic_threshold(input_tokens) end)
     |> Enum.sort_by(fn {_name, score} -> score end, :desc)
+
   end
 end
 
@@ -105,6 +139,7 @@ names = [
   "Adam John Smith",
   "Xerxes Smith",
   "Adam Jon Jones",
+  "Xerxes Murphy",
 ]
 
 # 2. Calculate entropy map
