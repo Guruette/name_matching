@@ -32,6 +32,7 @@ defmodule NameMatcher do
       |> String.split()
   end
 
+  # Jaro Distance between (0, 1)
   defp token_similarity(a, b) do
     max_len = max(String.length(a), String.length(b))
     if max_len == 0 do
@@ -41,7 +42,7 @@ defmodule NameMatcher do
     end
   end
 
-  #  Jaccard-Jaro to use fuzzy token matches symmetric
+  # Soft Jaccard similarity using Jaro (accounts for symmetry)
   def jaccard_similarity(tokens1, tokens2) do
     matrix = for t1 <- tokens1 do
       for t2 <- tokens2 do
@@ -49,6 +50,7 @@ defmodule NameMatcher do
       end
     end
 
+    # take best of row and best of col
     row_max = Enum.map(matrix, &Enum.max/1)
     col_max = matrix |> List.zip() |> Enum.map(&Tuple.to_list/1) |> Enum.map(&Enum.max/1)
 
@@ -57,7 +59,7 @@ defmodule NameMatcher do
   end
 
 
-  # Boost matches with similar name structures
+  # Token Count Similarity (boost)
   def structure_score(input_tokens, candidate_tokens) do
     input_length = length(input_tokens)
     candidate_length = length(candidate_tokens)
@@ -74,7 +76,10 @@ defmodule NameMatcher do
 
     sum_weights = fn set ->
       set
-      |> Enum.map(fn token -> 1 - Map.get(entropy_map, token, 1.0) end)
+      |> Enum.map(fn token ->
+        entropy = Map.get(entropy_map, token, 1.0)
+        1.0 / (1.0 + entropy)
+      end)
       |> Enum.sum()
     end
 
@@ -103,9 +108,6 @@ defmodule NameMatcher do
       candidate_tokens = normalise_string(candidate)
       jaccard = jaccard_similarity(input_tokens, candidate_tokens)
 
-      IO.inspect(candidate, label: "--- candidate")
-      IO.inspect(jaccard, label: "--- jaccard")
-
       if jaccard >= 0.5 do
         entropy_score = entropy_weighted_score(input_tokens, candidate_tokens, entropy_map)
         structure_score = structure_score(input_tokens, candidate_tokens)
@@ -116,7 +118,7 @@ defmodule NameMatcher do
       end
     end)
     |> Enum.reject(&is_nil/1)
-    |> Enum.reject(fn {_name, score} -> score < dynamic_threshold(input_tokens) end)
+    |> Enum.reject(fn {_name, score} -> score < dynamic_threshold(input_tokens) end) # remove this if you want them all
     |> Enum.sort_by(fn {_name, score} -> score end, :desc)
 
   end
