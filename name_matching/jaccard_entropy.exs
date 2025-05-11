@@ -89,15 +89,22 @@ end
 names = [
   "Smith-Brown, Adam John",
   "Smith Brown, Adam John",
+  "Smith Brown, Aadam John",
+  "Smith Bròwn, Adam John",
+  "Smith Bròwn, Adam Jon",
   "Smith, Alexandra",
   "Smith, John",
   "Smith, Mary",
   "Brown, Adam",
   "Ahmed, Adam",
   "Gordon, James",
+  "Jessica, Brown",
   "John Adam Brown",
+  "John Adam Murphy",
+  "Smith Murphy",
   "Adam John Smith",
   "Xerxes Smith",
+  "Adam Jon Jones",
 ]
 
 # 2. Calculate entropy map
@@ -105,7 +112,7 @@ entropy_map =
   NameMatcher.calculate(names)
 
 # 3. Find matches for an input name
-input = "Smith Brown Adam John"
+input = "Smith Brown Adam John Done"
 
 res =
     NameMatcher.find_matches(input, names, entropy_map)
