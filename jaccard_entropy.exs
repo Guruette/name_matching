@@ -30,6 +30,7 @@ defmodule NameMatcher do
       |> String.downcase()
       |> String.trim()
       |> String.split()
+      |> Enum.reject(fn x -> String.length(x)==1 end)
   end
 
   # Jaro Distance between (0, 1)
@@ -91,11 +92,11 @@ defmodule NameMatcher do
 
   defp dynamic_threshold(tokens) do
     case length(tokens) do
-      2 -> 0.9
-      3 -> 0.85
-      4 -> 0.8
-      5 -> 0.75
-      _ -> 0.7
+      2 -> 0.85
+      3 -> 0.80
+      4 -> 0.75
+      5 -> 0.7
+      _ -> 0.65
     end
   end
 
@@ -118,7 +119,7 @@ defmodule NameMatcher do
       end
     end)
     |> Enum.reject(&is_nil/1)
-    |> Enum.reject(fn {_name, score} -> score < dynamic_threshold(input_tokens) end) # remove this if you want them all
+    # |> Enum.reject(fn {_name, score} -> score < dynamic_threshold(input_tokens) end) # remove this if you want them all
     |> Enum.sort_by(fn {_name, score} -> score end, :desc)
 
   end
